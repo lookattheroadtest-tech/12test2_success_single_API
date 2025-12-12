@@ -13,17 +13,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: ZAP API Scan (Fixed Token - Working)
+      - name: OWASP ZAP API Scan (Fixed Token - NO cmd_options)
         uses: zaproxy/action-api-scan@v0.10.0
         with:
           format: openapi
           target: zap/api/admin-adduser-fixed-token.yaml
-          cmd_options: >-
-            -a 
-            -config scanner.attackOnStart=true 
-            -config view.mode=attack 
-            -config connection.timeoutInSecs=180 
-            -config rules.commonheaders.ignorelist=10035,10036,10038,10054,10063,100001
+          # These are the ONLY safe inputs – no cmd_options at all
+          alpha: true                                 # equals -a
+          attack_mode: true                           # equals -config scanner.attackOnStart=true + view.mode=attack
+          timeout: 180
 
       - name: Upload ZAP Report
         if: always()
@@ -34,3 +32,4 @@ jobs:
             report_html.html
             report_json.json
             report_md.md
+          retention-days: 14
