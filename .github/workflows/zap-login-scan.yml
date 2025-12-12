@@ -1,4 +1,4 @@
-name: ZAP DAST - Login Only
+name: ZAP API DAST - Login Only
 
 on:
   push:
@@ -13,21 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: OWASP ZAP Full Scan (Login POST)
-        uses: zaproxy/action-full-scan@v0.11.0
+      - name: ZAP API Scan (Login POST only)
+        uses: zaproxy/action-api-scan@v0.10.0  # API-specific action for OpenAPI
         with:
-          format: openapi
-          target: zap/api/login.yaml          # ← your clean file
-          allowIssueWriting: false
-          cmd_options: >-
-            -config api.disablekey=true
-            -config scanner.attackOnStart=true
-            -config view.mode=attack
-            -config connection.timeoutInSecs=180
+          format: openapi                       # Tells ZAP it's an OpenAPI spec
+          target: zap/api/login.yaml            # Your local YAML file
+          allow_issue_writing: false            # Don't create GitHub issues
+          cmd_options: >-                       # Extra ZAP configs for thorough scanning
+            -a                                 # Include alpha rules (experimental but powerful)
+            -config scanner.attackOnStart=true  # Start active attacks immediately
+            -config view.mode=attack            # Full attack mode
+            -config connection.timeoutInSecs=180 # Longer timeout for API responses
 
       - name: Upload ZAP Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-login-report
-          path: zap_report.html
+          path: |
+            report_html.html
+            report_json.json  # Optional: JSON for parsing/alert thresholds
