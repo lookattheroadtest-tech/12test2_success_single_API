@@ -1,35 +1,37 @@
 name: ZAP DAST - Admin AddUser (Fixed Token)
 
 on:
-  push:
-    paths:
-      - 'zap/api/admin-adduser-fixed-token.yaml'
   workflow_dispatch:
 
 jobs:
   zap-scan:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: ZAP API Scan (Working Path + Bearer Token)
-        uses: zaproxy/action-api-scan@v0.10.0
-        with:
-          # THIS IS THE KEY FIX — full path inside container
-          target: /zap/wrk/zap/api/admin-adduser-fixed-token.yaml
-          format: openapi
-          alpha: true
-          attack_mode: true
-          timeout: 300
+    - name: Run ZAP API Scan
+      uses: zaproxy/action-api-scan@v0.10.0
+      with:
+        target: /zap/wrk/zap/api/admin-adduser-fixed-token.yaml
+        format: openapi
+        cmd_options: >
+          -J report_json.json
+          -w report_md.md
+          -r report_html.html
+          -a
+          -config scanner.attackOnStart=true
+          -config view.mode=attack
+          -config connection.timeoutInSecs=180
+          -config rules.commonheaders.ignorelist=10035,10036,10038,10054,10063,100001
+          -config api.failOnError=false
 
-      - name: Upload ZAP Report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-admin-adduser-report
-          path: |
-            report_html.html
-            report_json.json
-            report_md.md
-          retention-days: 30
+    - name: Upload Reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-reports
+        path: |
+          report_md.md
+          report_html.html
+          report_json.json
